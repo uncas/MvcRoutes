@@ -20,9 +20,6 @@ namespace MvcRoutes
 
             CallRegisterRoutes(args);
 
-            XmlDocument loadAssemblyComments = XmlComments.LoadAssemblyComments(Assembly.LoadFile(args[0]));
-            Console.WriteLine("AssemblyComments: {0}", loadAssemblyComments.ChildNodes.Count);
-
             Console.WriteLine("|| URL || HTTP Methods || Parameters || Comments ||");
             foreach (RouteBase route in RouteTable.Routes)
             {
@@ -61,10 +58,9 @@ namespace MvcRoutes
                 }
             }
 
-            if (methodsString == string.Empty)
-            {
+            if (string.IsNullOrWhiteSpace(methodsString))
                 methodsString = GetMethodsFromAttributes(rt);
-            }
+
             return methodsString;
         }
 
