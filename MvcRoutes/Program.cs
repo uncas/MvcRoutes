@@ -7,24 +7,30 @@ using System.Web.Routing;
 
 namespace MvcRoutes
 {
-    class Program
+    internal class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             if (args.Count() != 1)
             {
                 Console.WriteLine("Please send the path to your dll as the first argument");
                 return;
             }
-            
+
             CallRegisterRoutes(args);
 
-            foreach (var route in RouteTable.Routes)
+            Console.WriteLine("|| URL || HTTP Methods || Parameters || Comments ||");
+            foreach (RouteBase route in RouteTable.Routes)
             {
-                var rt = (Route)route;
+                var rt = (Route) route;
                 string methodsString = GetMethodsString(rt);
-                
-                Console.WriteLine(rt.Url + " httpMethods: " + methodsString);
+                string parametersString = GetParameters(rt);
+
+                Console.WriteLine(
+                    "| {0} | {1} | {2} | |",
+                    rt.Url.Replace("{", "\\{"),
+                    methodsString,
+                    parametersString);
             }
         }
 
@@ -44,12 +50,12 @@ namespace MvcRoutes
             {
                 if (constraint.Key == "HttpVerbs")
                 {
-                    var allowedMethods = ((HttpMethodConstraint) constraint.Value).AllowedMethods.ToList();
+                    List<string> allowedMethods = ((HttpMethodConstraint) constraint.Value).AllowedMethods.ToList();
                     methodsString = string.Join(", ", allowedMethods);
                 }
             }
 
-            if(methodsString == string.Empty)
+            if (methodsString == string.Empty)
             {
                 methodsString = GetMethodsFromAttributes(rt);
             }
@@ -79,18 +85,19 @@ namespace MvcRoutes
             if (rt.Defaults == null)
                 return string.Empty;
 
-            var controllerAndActionNameFromRoute = GetControllerAndActionNameFromRoute(rt);
+            Tuple<string, string> controllerAndActionNameFromRoute = GetControllerAndActionNameFromRoute(rt);
             string controllerName = controllerAndActionNameFromRoute.Item1;
             string actionName = controllerAndActionNameFromRoute.Item2;
-            
+
             if (string.IsNullOrEmpty(actionName))
                 return string.Empty;
-            
-            var controllerType = ReflectionUtil.GetType(controllerName);
 
-            if(controllerType == null)
+            Type controllerType = ReflectionUtil.GetType(controllerName);
+
+            if (controllerType == null)
             {
-                Console.WriteLine("Controller not found even though is it marked as a controller for an action: " + controllerName);
+                Console.WriteLine("Controller not found even though is it marked as a controller for an action: " +
+                                  controllerName);
                 return string.Empty;
             }
             MethodInfo actionMethodInfo;
@@ -101,14 +108,50 @@ namespace MvcRoutes
             catch (Exception)
             {
                 return "Unable to resolve the method am not that smart yet";
-
             }
 
             if (actionMethodInfo == null)
                 return string.Empty;
-            var customAttributes = Attribute.GetCustomAttributes(actionMethodInfo);
-            
-            return  GetMethodsFromAttributes(customAttributes);
+            Attribute[] customAttributes = Attribute.GetCustomAttributes(actionMethodInfo);
+
+            return GetMethodsFromAttributes(customAttributes);
+        }
+
+        private static string GetParameters(Route rt)
+        {
+            if (rt.Defaults == null)
+                return string.Empty;
+
+            Tuple<string, string> controllerAndActionNameFromRoute = GetControllerAndActionNameFromRoute(rt);
+            string controllerName = controllerAndActionNameFromRoute.Item1;
+            string actionName = controllerAndActionNameFromRoute.Item2;
+
+            if (string.IsNullOrEmpty(actionName))
+                return string.Empty;
+
+            Type controllerType = ReflectionUtil.GetType(controllerName);
+
+            if (controllerType == null)
+            {
+                Console.WriteLine("Controller not found even though is it marked as a controller for an action: " +
+                                  controllerName);
+                return string.Empty;
+            }
+            MethodInfo actionMethodInfo;
+            try
+            {
+                actionMethodInfo = controllerType.GetMethod(actionName);
+            }
+            catch (Exception)
+            {
+                return "Unable to resolve the method am not that smart yet";
+            }
+
+            if (actionMethodInfo == null)
+                return string.Empty;
+            ParameterInfo[] parameters = actionMethodInfo.GetParameters();
+
+            return string.Join(", ", parameters.Select(p => p.Name));
         }
 
         private static string GetMethodsFromAttributes(IEnumerable<Attribute> customAttributes)
@@ -121,19 +164,19 @@ namespace MvcRoutes
                                                 {"HttpPutAttribute", "PUT"},
                                             };
             var httpMethodList = new List<string>();
-            foreach (var customAttribute in customAttributes)
+            foreach (Attribute customAttribute in customAttributes)
             {
-                var attributeName = customAttribute.GetType().Name;
+                string attributeName = customAttribute.GetType().Name;
                 if (attributeToMethodName.ContainsKey(attributeName))
                 {
                     httpMethodList.Add(attributeToMethodName[attributeName]);
                 }
-                else if(attributeName == "AcceptVerbsAttribute")
+                else if (attributeName == "AcceptVerbsAttribute")
                 {
-                        httpMethodList.AddRange(((AcceptVerbsAttribute)customAttribute).Verbs);
+                    httpMethodList.AddRange(((AcceptVerbsAttribute) customAttribute).Verbs);
                 }
             }
-            return  string.Join(",", httpMethodList);
+            return string.Join(",", httpMethodList);
         }
     }
 }
