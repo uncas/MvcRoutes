@@ -177,7 +177,7 @@ namespace MvcRoutes
                 return string.Empty;
             if (string.IsNullOrWhiteSpace(summaryNode.InnerText))
                 return string.Empty;
-            return summaryNode.InnerText;
+            return summaryNode.InnerText.Trim();
         }
 
         private static string GetMethodsFromAttributes(IEnumerable<Attribute> customAttributes)
