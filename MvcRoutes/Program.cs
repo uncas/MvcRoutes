@@ -53,6 +53,12 @@ namespace MvcRoutes
                 formatter.OutputGroup(groupName.SplitUpperCaseToString());
                 OutputEndpoints(formatter, controller.ToList().OrderBy(e => e.Documentation.Name));
             }
+
+            Console.WriteLine(@"
+
+h1. About
+
+Auto-generated with https://github.com/uncas/MvcRoutes.");
         }
 
         private static void OutputEndpoints(IEndpointFormatter formatter, IEnumerable<Endpoint> endpoints)
