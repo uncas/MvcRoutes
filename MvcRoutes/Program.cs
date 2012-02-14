@@ -12,7 +12,7 @@ namespace MvcRoutes
     {
         private static void Main(string[] args)
         {
-            if (args.Count() != 1)
+            if (!args.Any())
             {
                 Console.WriteLine("Please send the path to your dll as the first argument");
                 return;
@@ -20,20 +20,21 @@ namespace MvcRoutes
 
             CallRegisterRoutes(args);
 
-            Console.WriteLine("|| URL || HTTP Methods || Parameters || Comments ||");
+            Console.WriteLine("|| URL || HTTP Methods || Parameters || Summary || Example ||");
             foreach (RouteBase route in RouteTable.Routes)
             {
                 var rt = (Route) route;
                 string methodsString = GetMethodsString(rt);
-                string parametersString = GetParameters(rt);
-                string summary = GetSummary(rt);
+                string parametersString = GetParametersString(rt);
+                Documentation documentation = GetDocumentation(rt);
 
                 Console.WriteLine(
-                    "| {0} | {1} | {2} | {3} |",
+                    "| {0} | {1} | {2} | {3} | {4} |",
                     rt.Url.Replace("{", "\\{"),
                     methodsString,
                     parametersString,
-                    summary);
+                    documentation.Summary,
+                    documentation.Example);
             }
         }
 
@@ -131,7 +132,7 @@ namespace MvcRoutes
             }
         }
 
-        private static string GetParameters(Route rt)
+        private static string GetParametersString(Route rt)
         {
             MethodInfo actionMethodInfo;
             try
@@ -151,28 +152,34 @@ namespace MvcRoutes
             return string.Join(", ", parameters.Select(p => p.Name));
         }
 
-        private static string GetSummary(Route rt)
+        private static Documentation GetDocumentation(Route rt)
         {
+            var result = new Documentation();
             MethodInfo actionMethodInfo;
             try
             {
                 actionMethodInfo = GetMethodInfo(rt);
             }
-            catch (Exception ex)
+            catch
             {
-                return ex.Message;
+                return result;
             }
 
             if (actionMethodInfo == null)
-                return string.Empty;
-            
+                return result;
+
             var xmlComments = new XmlComments(actionMethodInfo);
-            //return xmlComments.ToString();
-            XmlNode summaryNode = xmlComments.Summary;
-            if (summaryNode == null)
-                return string.Empty;
-            if (string.IsNullOrWhiteSpace(summaryNode.InnerText))
-                return string.Empty;
+
+            result.Summary = ExtractNodeContent(xmlComments.Summary);
+            result.Example = ExtractNodeContent(xmlComments.Example);
+
+            return result;
+        }
+
+        private static string ExtractNodeContent(XmlNode summaryNode)
+        {
+            if (summaryNode == null || string.IsNullOrWhiteSpace(summaryNode.InnerText))
+                return null;
             return summaryNode.InnerText.Trim();
         }
 
@@ -200,5 +207,15 @@ namespace MvcRoutes
             }
             return string.Join(",", httpMethodList);
         }
+
+        #region Nested type: Documentation
+
+        private class Documentation
+        {
+            public string Example { get; set; }
+            public string Summary { get; set; }
+        }
+
+        #endregion
     }
 }
