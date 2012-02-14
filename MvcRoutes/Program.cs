@@ -23,6 +23,7 @@ namespace MvcRoutes
             IEndpointFormatter formatter = new WikiLongFormatter();
 
             formatter.OutputHeader();
+            var endpoints = new List<Endpoint>();
             foreach (RouteBase route in RouteTable.Routes)
             {
                 var rt = (Route) route;
@@ -37,6 +38,11 @@ namespace MvcRoutes
                                        Url = rt.Url,
                                        Parameters = parameters
                                    };
+                endpoints.Add(endpoint);
+            }
+
+            foreach (Endpoint endpoint in endpoints)
+            {
                 if (!string.IsNullOrWhiteSpace(endpoint.Documentation.Name))
                     formatter.OutputEndpoint(endpoint);
             }
@@ -289,7 +295,6 @@ h2. Endpoints");
 
             public void OutputEndpoint(Endpoint endpoint)
             {
-                string parametersString = GetParametersString(endpoint.Parameters);
                 string summary = endpoint.Documentation.Summary;
                 string name = endpoint.Documentation.Name;
                 Console.WriteLine(
@@ -304,9 +309,6 @@ h3. {0}
                     endpoint.Url.Replace("{", "\\{"),
                     endpoint.Methods,
                     summary);
-
-                //if (!string.IsNullOrWhiteSpace(parametersString))
-                //    Console.WriteLine("| Parameters | {0} |", parametersString);
 
                 if (!string.IsNullOrWhiteSpace(endpoint.Documentation.Example))
                     Console.WriteLine("| Example | {0} |", endpoint.Documentation.Example);
