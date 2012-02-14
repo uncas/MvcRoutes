@@ -20,7 +20,9 @@ namespace MvcRoutes
 
             CallRegisterRoutes(args);
 
-            OutputWikiHeader();
+            IEndpointFormatter formatter = new WikiLongFormatter();
+
+            formatter.OutputHeader();
             foreach (RouteBase route in RouteTable.Routes)
             {
                 var rt = (Route) route;
@@ -36,7 +38,7 @@ namespace MvcRoutes
                                        Parameters = parameters
                                    };
 
-                OutputEndpointInWikiFormat(endpoint);
+                formatter.OutputEndpoint(endpoint);
             }
         }
 
@@ -244,12 +246,88 @@ namespace MvcRoutes
 
         #endregion
 
+        #region Nested type: IEndpointFormatter
+
+        private interface IEndpointFormatter
+        {
+            void OutputHeader();
+            void OutputEndpoint(Endpoint endpoint);
+        }
+
+        #endregion
+
         #region Nested type: MethodDocumentation
 
         private class MethodDocumentation
         {
             public string Example { get; set; }
             public string Summary { get; set; }
+        }
+
+        #endregion
+
+        #region Nested type: WikiLongFormatter
+
+        private class WikiLongFormatter : IEndpointFormatter
+        {
+            #region IEndpointFormatter Members
+
+            public void OutputHeader()
+            {
+                Console.WriteLine("h2. Endpoints");
+            }
+
+            public void OutputEndpoint(Endpoint endpoint)
+            {
+                string parametersString = GetParametersString(endpoint.Parameters);
+                string summary = endpoint.Documentation.Summary;
+                Console.WriteLine(
+                    @"
+h3. {0}
+
+| URL | {1} |
+| HTTP Methods | {2} |
+| Parameters | {3} |
+| Summary | {4} |
+| Example | {5} |
+",
+                    summary,
+                    endpoint.Url.Replace("{", "\\{"),
+                    endpoint.Methods,
+                    parametersString,
+                    summary,
+                    endpoint.Documentation.Example);
+            }
+
+            #endregion
+        }
+
+        #endregion
+
+        #region Nested type: WikiShortFormatter
+
+        private class WikiShortFormatter : IEndpointFormatter
+        {
+            #region IEndpointFormatter Members
+
+            public void OutputHeader()
+            {
+                Console.WriteLine("|| URL || HTTP Methods || Parameters || Summary || Example ||");
+            }
+
+            public void OutputEndpoint(Endpoint endpoint)
+            {
+                string parametersString = GetParametersString(endpoint.Parameters);
+                Console.WriteLine(
+                    "| {0} | {1} | {2} | {3} | {4} |",
+                    endpoint.Url.Replace("{", "\\{"),
+                    endpoint.Methods,
+                    parametersString,
+                    endpoint.Documentation.Summary,
+                    endpoint.Documentation.Example);
+            }
+
+            #endregion
         }
 
         #endregion
