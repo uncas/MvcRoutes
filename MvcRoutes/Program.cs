@@ -41,6 +41,24 @@ namespace MvcRoutes
                 endpoints.Add(endpoint);
             }
 
+            IEnumerable<IGrouping<string, Endpoint>> controllers =
+                endpoints.GroupBy(e => e.Documentation.ControllerName).OrderBy(g => g.Key);
+
+            foreach (var controller in controllers)
+            {
+                string key = controller.Key;
+                if (string.IsNullOrWhiteSpace(key))
+                    continue;
+                string groupName = key.Replace("Controller", string.Empty);
+                formatter.OutputGroup(groupName.SplitUpperCaseToString());
+                OutputEndpoints(formatter, controller.ToList().OrderBy(e => e.Documentation.Name));
+            }
+
+            //OutputEndpoints(formatter, endpoints);
+        }
+
+        private static void OutputEndpoints(IEndpointFormatter formatter, IEnumerable<Endpoint> endpoints)
+        {
             foreach (Endpoint endpoint in endpoints)
             {
                 if (!string.IsNullOrWhiteSpace(endpoint.Documentation.Name))
@@ -276,6 +294,7 @@ namespace MvcRoutes
         {
             void OutputHeader();
             void OutputEndpoint(Endpoint endpoint);
+            void OutputGroup(string groupName);
         }
 
         #endregion
@@ -300,7 +319,7 @@ h2. Endpoints");
                 Console.WriteLine(
                     @"
 
-h3. {0}
+h4. {0}
 
 | URL | {1} |
 | HTTP Methods | {2} |
@@ -328,6 +347,16 @@ h3. {0}
                             GetActionDocumentation(parameter));
                     }
                 }
+            }
+
+            public void OutputGroup(string groupName)
+            {
+                if (string.IsNullOrWhiteSpace(groupName))
+                    return;
+                Console.WriteLine(@"
+
+h3. {0}
+", groupName);
             }
 
             #endregion
@@ -361,6 +390,10 @@ h3. {0}
                     parametersString,
                     endpoint.Documentation.Summary,
                     endpoint.Documentation.Example);
+            }
+
+            public void OutputGroup(string groupName)
+            {
             }
 
             #endregion
