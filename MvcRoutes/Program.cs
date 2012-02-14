@@ -25,7 +25,8 @@ namespace MvcRoutes
             {
                 var rt = (Route) route;
                 string methodsString = GetMethodsString(rt);
-                string parametersString = GetParametersString(rt);
+                IEnumerable<ParameterInfo> parameters = GetParameters(rt);
+                string parametersString = GetParametersString(parameters);
                 Documentation documentation = GetDocumentation(rt);
 
                 Console.WriteLine(
@@ -132,13 +133,10 @@ namespace MvcRoutes
             }
         }
 
-        private static string GetParametersString(Route rt)
+        private static string GetParametersString(IEnumerable<ParameterInfo> parameters)
         {
-            IEnumerable<ParameterInfo> parameters = GetParameters(rt);
-
             if (parameters == null)
                 return string.Empty;
-
             return string.Join(", ", parameters.Select(p => p.Name));
         }
 
@@ -149,7 +147,7 @@ namespace MvcRoutes
             {
                 actionMethodInfo = GetMethodInfo(rt);
             }
-            catch (Exception ex)
+            catch
             {
                 return null;
             }
