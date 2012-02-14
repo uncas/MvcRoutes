@@ -46,10 +46,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ActionDocumentation.cs" />
+    <Compile Include="Endpoint.cs" />
     <Compile Include="Formatters.cs" />
+    <Compile Include="IEndpointFormatter.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReflectionUtil.cs" />
+    <Compile Include="WikiLongFormatter.cs" />
+    <Compile Include="WikiShortFormatter.cs" />
     <Compile Include="XmlComments.cs" />
   </ItemGroup>
   <ItemGroup>

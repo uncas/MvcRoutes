@@ -160,13 +160,6 @@ namespace MvcRoutes
             }
         }
 
-        private static string GetParametersString(IEnumerable<ParameterInfo> parameters)
-        {
-            if (parameters == null)
-                return string.Empty;
-            return string.Join(", ", parameters.Select(p => p.Name));
-        }
-
         private static IEnumerable<ParameterInfo> GetParameters(Route rt)
         {
             MethodInfo actionMethodInfo;
@@ -213,24 +206,6 @@ namespace MvcRoutes
             return result;
         }
 
-        private static string GetActionDocumentation(ParameterInfo parameter)
-        {
-            var xmlComments = new XmlComments(parameter.Member);
-
-            XmlNodeList nodes = xmlComments.Params;
-            foreach (XmlNode node in nodes)
-            {
-                if (node.Attributes == null)
-                    continue;
-                XmlAttribute xmlAttribute = node.Attributes["name"];
-                if (xmlAttribute == null)
-                    continue;
-                if (xmlAttribute.InnerText == parameter.Name)
-                    return node.InnerText;
-            }
-
-            return string.Empty;
-        }
 
         private static string ExtractNodeContent(XmlNode summaryNode)
         {
@@ -263,147 +238,5 @@ namespace MvcRoutes
             }
             return string.Join(",", httpMethodList);
         }
-
-        #region Nested type: ActionDocumentation
-
-        private class ActionDocumentation
-        {
-            public string ControllerName { get; set; }
-            public string Example { get; set; }
-            public string Name { get; set; }
-            public string Remarks { get; set; }
-            public string Return { get; set; }
-            public string Summary { get; set; }
-        }
-
-        #endregion
-
-        #region Nested type: Endpoint
-
-        private class Endpoint
-        {
-            public string Url { get; set; }
-            public string Methods { get; set; }
-            public IEnumerable<ParameterInfo> Parameters { get; set; }
-            public ActionDocumentation Documentation { get; set; }
-        }
-
-        #endregion
-
-        #region Nested type: IEndpointFormatter
-
-        private interface IEndpointFormatter
-        {
-            void OutputHeader();
-            void OutputEndpoint(Endpoint endpoint);
-            void OutputGroup(string groupName);
-        }
-
-        #endregion
-
-        #region Nested type: WikiLongFormatter
-
-        private class WikiLongFormatter : IEndpointFormatter
-        {
-            #region IEndpointFormatter Members
-
-            public void OutputHeader()
-            {
-                Console.WriteLine(@"{toc}
-
-h2. Endpoints");
-            }
-
-            public void OutputEndpoint(Endpoint endpoint)
-            {
-                string summary = endpoint.Documentation.Summary;
-                string name = endpoint.Documentation.Name;
-                Console.WriteLine(
-                    @"
-
-h4. {0}
-
-| URL | {1} |
-| HTTP Methods | {2} |
-| Summary | {3} |",
-                    FormatName(name),
-                    endpoint.Url.Replace("{", "\\{"),
-                    endpoint.Methods,
-                    summary);
-
-                if (!string.IsNullOrWhiteSpace(endpoint.Documentation.Return))
-                    Console.WriteLine("| Returns | {0} |", endpoint.Documentation.Return);
-
-                if (!string.IsNullOrWhiteSpace(endpoint.Documentation.Example))
-                    Console.WriteLine("| Example | {0} |", endpoint.Documentation.Example);
-
-                if (!string.IsNullOrWhiteSpace(endpoint.Documentation.Remarks))
-                    Console.WriteLine("{0}Remarks: {1}{0}", Environment.NewLine, endpoint.Documentation.Remarks);
-
-                if (endpoint.Parameters != null && endpoint.Parameters.Any())
-                {
-                    Console.WriteLine(@"
-|| Parameter || Description ||");
-                    foreach (ParameterInfo parameter in endpoint.Parameters)
-                    {
-                        Console.WriteLine(
-                            "| {0} | {1} |",
-                            parameter.Name,
-                            GetActionDocumentation(parameter));
-                    }
-                }
-            }
-
-            public void OutputGroup(string groupName)
-            {
-                if (string.IsNullOrWhiteSpace(groupName))
-                    return;
-                Console.WriteLine(@"
-
-h3. {0}
-", groupName);
-            }
-
-            #endregion
-
-            private static string FormatName(string name)
-            {
-                return name.SplitUpperCaseToString();
-            }
-        }
-
-        #endregion
-
-        #region Nested type: WikiShortFormatter
-
-        private class WikiShortFormatter : IEndpointFormatter
-        {
-            #region IEndpointFormatter Members
-
-            public void OutputHeader()
-            {
-                Console.WriteLine("|| URL || HTTP Methods || Parameters || Summary || Example ||");
-            }
-
-            public void OutputEndpoint(Endpoint endpoint)
-            {
-                string parametersString = GetParametersString(endpoint.Parameters);
-                Console.WriteLine(
-                    "| {0} | {1} | {2} | {3} | {4} |",
-                    endpoint.Url.Replace("{", "\\{"),
-                    endpoint.Methods,
-                    parametersString,
-                    endpoint.Documentation.Summary,
-                    endpoint.Documentation.Example);
-            }
-
-            public void OutputGroup(string groupName)
-            {
-            }
-
-            #endregion
-        }
-
-        #endregion
     }
 }
