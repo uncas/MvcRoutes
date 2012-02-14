@@ -28,17 +28,17 @@ namespace MvcRoutes
                 var rt = (Route) route;
                 string methodsString = GetMethodsString(rt);
                 IEnumerable<ParameterInfo> parameters = GetParameters(rt);
-                MethodDocumentation methodDocumentation = GetParameterDocumentation(rt);
+                ActionDocumentation actionDocumentation = GetActionDocumentation(rt);
 
                 var endpoint = new Endpoint
                                    {
-                                       Documentation = methodDocumentation,
+                                       Documentation = actionDocumentation,
                                        Methods = methodsString,
                                        Url = rt.Url,
                                        Parameters = parameters
                                    };
-
-                formatter.OutputEndpoint(endpoint);
+                if (!string.IsNullOrWhiteSpace(endpoint.Documentation.Name))
+                    formatter.OutputEndpoint(endpoint);
             }
         }
 
@@ -161,9 +161,9 @@ namespace MvcRoutes
             return actionMethodInfo.GetParameters();
         }
 
-        private static MethodDocumentation GetParameterDocumentation(Route rt)
+        private static ActionDocumentation GetActionDocumentation(Route rt)
         {
-            var result = new MethodDocumentation();
+            var result = new ActionDocumentation();
             MethodInfo actionMethodInfo;
             try
             {
@@ -179,6 +179,8 @@ namespace MvcRoutes
 
             var xmlComments = new XmlComments(actionMethodInfo);
 
+            result.Name = actionMethodInfo.Name;
+            result.ControllerName = actionMethodInfo.DeclaringType.Name;
             result.Summary = ExtractNodeContent(xmlComments.Summary);
             result.Example = ExtractNodeContent(xmlComments.Example);
             result.Remarks = ExtractNodeContent(xmlComments.Remarks);
@@ -186,7 +188,7 @@ namespace MvcRoutes
             return result;
         }
 
-        private static string GetParameterDocumentation(ParameterInfo parameter)
+        private static string GetActionDocumentation(ParameterInfo parameter)
         {
             var xmlComments = new XmlComments(parameter.Member);
 
@@ -237,6 +239,19 @@ namespace MvcRoutes
             return string.Join(",", httpMethodList);
         }
 
+        #region Nested type: ActionDocumentation
+
+        private class ActionDocumentation
+        {
+            public string ControllerName { get; set; }
+            public string Example { get; set; }
+            public string Name { get; set; }
+            public string Remarks { get; set; }
+            public string Summary { get; set; }
+        }
+
+        #endregion
+
         #region Nested type: Endpoint
 
         private class Endpoint
@@ -244,7 +259,7 @@ namespace MvcRoutes
             public string Url { get; set; }
             public string Methods { get; set; }
             public IEnumerable<ParameterInfo> Parameters { get; set; }
-            public MethodDocumentation Documentation { get; set; }
+            public ActionDocumentation Documentation { get; set; }
         }
 
         #endregion
@@ -255,17 +270,6 @@ namespace MvcRoutes
         {
             void OutputHeader();
             void OutputEndpoint(Endpoint endpoint);
-        }
-
-        #endregion
-
-        #region Nested type: MethodDocumentation
-
-        private class MethodDocumentation
-        {
-            public string Example { get; set; }
-            public string Remarks { get; set; }
-            public string Summary { get; set; }
         }
 
         #endregion
@@ -287,6 +291,7 @@ h2. Endpoints");
             {
                 string parametersString = GetParametersString(endpoint.Parameters);
                 string summary = endpoint.Documentation.Summary;
+                string name = endpoint.Documentation.Name;
                 Console.WriteLine(
                     @"
 
@@ -294,34 +299,41 @@ h3. {0}
 
 | URL | {1} |
 | HTTP Methods | {2} |
-| Parameters | {3} |
-| Summary | {4} |
-| Example | {5} |
-",
-                    summary,
+| Summary | {3} |",
+                    FormatName(name),
                     endpoint.Url.Replace("{", "\\{"),
                     endpoint.Methods,
-                    parametersString,
-                    summary,
-                    endpoint.Documentation.Example);
+                    summary);
+
+                //if (!string.IsNullOrWhiteSpace(parametersString))
+                //    Console.WriteLine("| Parameters | {0} |", parametersString);
+
+                if (!string.IsNullOrWhiteSpace(endpoint.Documentation.Example))
+                    Console.WriteLine("| Example | {0} |", endpoint.Documentation.Example);
 
                 if (!string.IsNullOrWhiteSpace(endpoint.Documentation.Remarks))
                     Console.WriteLine("Remarks: {1}{0}", Environment.NewLine, endpoint.Documentation.Remarks);
 
                 if (endpoint.Parameters != null && endpoint.Parameters.Any())
                 {
-                    Console.WriteLine("|| Parameter || Description ||");
+                    Console.WriteLine(@"
+|| Parameter || Description ||");
                     foreach (ParameterInfo parameter in endpoint.Parameters)
                     {
                         Console.WriteLine(
                             "| {0} | {1} |",
                             parameter.Name,
-                            GetParameterDocumentation(parameter));
+                            GetActionDocumentation(parameter));
                     }
                 }
             }
 
             #endregion
+
+            private static string FormatName(string name)
+            {
+                return name.SplitUpperCaseToString();
+            }
         }
 
         #endregion
