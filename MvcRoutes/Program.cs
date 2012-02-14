@@ -181,6 +181,7 @@ namespace MvcRoutes
 
             result.Summary = ExtractNodeContent(xmlComments.Summary);
             result.Example = ExtractNodeContent(xmlComments.Example);
+            result.Remarks = ExtractNodeContent(xmlComments.Remarks);
 
             return result;
         }
@@ -263,6 +264,7 @@ namespace MvcRoutes
         private class MethodDocumentation
         {
             public string Example { get; set; }
+            public string Remarks { get; set; }
             public string Summary { get; set; }
         }
 
@@ -276,7 +278,9 @@ namespace MvcRoutes
 
             public void OutputHeader()
             {
-                Console.WriteLine("h2. Endpoints");
+                Console.WriteLine(@"{toc}
+
+h2. Endpoints");
             }
 
             public void OutputEndpoint(Endpoint endpoint)
@@ -300,6 +304,9 @@ h3. {0}
                     parametersString,
                     summary,
                     endpoint.Documentation.Example);
+
+                if (!string.IsNullOrWhiteSpace(endpoint.Documentation.Remarks))
+                    Console.WriteLine("Remarks: {1}{0}", Environment.NewLine, endpoint.Documentation.Remarks);
 
                 if (endpoint.Parameters != null && endpoint.Parameters.Any())
                 {
