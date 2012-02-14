@@ -28,7 +28,7 @@ namespace MvcRoutes
                 var rt = (Route) route;
                 string methodsString = GetMethodsString(rt);
                 IEnumerable<ParameterInfo> parameters = GetParameters(rt);
-                MethodDocumentation methodDocumentation = GetDocumentation(rt);
+                MethodDocumentation methodDocumentation = GetParameterDocumentation(rt);
 
                 var endpoint = new Endpoint
                                    {
@@ -40,23 +40,6 @@ namespace MvcRoutes
 
                 formatter.OutputEndpoint(endpoint);
             }
-        }
-
-        private static void OutputWikiHeader()
-        {
-            Console.WriteLine("|| URL || HTTP Methods || Parameters || Summary || Example ||");
-        }
-
-        private static void OutputEndpointInWikiFormat(Endpoint endpoint)
-        {
-            string parametersString = GetParametersString(endpoint.Parameters);
-            Console.WriteLine(
-                "| {0} | {1} | {2} | {3} | {4} |",
-                endpoint.Url.Replace("{", "\\{"),
-                endpoint.Methods,
-                parametersString,
-                endpoint.Documentation.Summary,
-                endpoint.Documentation.Example);
         }
 
         private static void CallRegisterRoutes(string[] args)
@@ -178,7 +161,7 @@ namespace MvcRoutes
             return actionMethodInfo.GetParameters();
         }
 
-        private static MethodDocumentation GetDocumentation(Route rt)
+        private static MethodDocumentation GetParameterDocumentation(Route rt)
         {
             var result = new MethodDocumentation();
             MethodInfo actionMethodInfo;
@@ -200,6 +183,25 @@ namespace MvcRoutes
             result.Example = ExtractNodeContent(xmlComments.Example);
 
             return result;
+        }
+
+        private static string GetParameterDocumentation(ParameterInfo parameter)
+        {
+            var xmlComments = new XmlComments(parameter.Member);
+
+            XmlNodeList nodes = xmlComments.Params;
+            foreach (XmlNode node in nodes)
+            {
+                if (node.Attributes == null)
+                    continue;
+                XmlAttribute xmlAttribute = node.Attributes["name"];
+                if (xmlAttribute == null)
+                    continue;
+                if (xmlAttribute.InnerText == parameter.Name)
+                    return node.InnerText;
+            }
+
+            return string.Empty;
         }
 
         private static string ExtractNodeContent(XmlNode summaryNode)
@@ -283,6 +285,7 @@ namespace MvcRoutes
                 string summary = endpoint.Documentation.Summary;
                 Console.WriteLine(
                     @"
+
 h3. {0}
 
 | URL | {1} |
@@ -297,6 +300,18 @@ h3. {0}
                     parametersString,
                     summary,
                     endpoint.Documentation.Example);
+
+                if (endpoint.Parameters != null && endpoint.Parameters.Any())
+                {
+                    Console.WriteLine("|| Parameter || Description ||");
+                    foreach (ParameterInfo parameter in endpoint.Parameters)
+                    {
+                        Console.WriteLine(
+                            "| {0} | {1} |",
+                            parameter.Name,
+                            GetParameterDocumentation(parameter));
+                    }
+                }
             }
 
             #endregion
