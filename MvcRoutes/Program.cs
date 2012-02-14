@@ -20,23 +20,41 @@ namespace MvcRoutes
 
             CallRegisterRoutes(args);
 
-            Console.WriteLine("|| URL || HTTP Methods || Parameters || Summary || Example ||");
+            OutputWikiHeader();
             foreach (RouteBase route in RouteTable.Routes)
             {
                 var rt = (Route) route;
                 string methodsString = GetMethodsString(rt);
                 IEnumerable<ParameterInfo> parameters = GetParameters(rt);
-                string parametersString = GetParametersString(parameters);
-                Documentation documentation = GetDocumentation(rt);
+                MethodDocumentation methodDocumentation = GetDocumentation(rt);
 
-                Console.WriteLine(
-                    "| {0} | {1} | {2} | {3} | {4} |",
-                    rt.Url.Replace("{", "\\{"),
-                    methodsString,
-                    parametersString,
-                    documentation.Summary,
-                    documentation.Example);
+                var endpoint = new Endpoint
+                                   {
+                                       Documentation = methodDocumentation,
+                                       Methods = methodsString,
+                                       Url = rt.Url,
+                                       Parameters = parameters
+                                   };
+
+                OutputEndpointInWikiFormat(endpoint);
             }
+        }
+
+        private static void OutputWikiHeader()
+        {
+            Console.WriteLine("|| URL || HTTP Methods || Parameters || Summary || Example ||");
+        }
+
+        private static void OutputEndpointInWikiFormat(Endpoint endpoint)
+        {
+            string parametersString = GetParametersString(endpoint.Parameters);
+            Console.WriteLine(
+                "| {0} | {1} | {2} | {3} | {4} |",
+                endpoint.Url.Replace("{", "\\{"),
+                endpoint.Methods,
+                parametersString,
+                endpoint.Documentation.Summary,
+                endpoint.Documentation.Example);
         }
 
         private static void CallRegisterRoutes(string[] args)
@@ -158,9 +176,9 @@ namespace MvcRoutes
             return actionMethodInfo.GetParameters();
         }
 
-        private static Documentation GetDocumentation(Route rt)
+        private static MethodDocumentation GetDocumentation(Route rt)
         {
-            var result = new Documentation();
+            var result = new MethodDocumentation();
             MethodInfo actionMethodInfo;
             try
             {
@@ -214,9 +232,21 @@ namespace MvcRoutes
             return string.Join(",", httpMethodList);
         }
 
-        #region Nested type: Documentation
+        #region Nested type: Endpoint
 
-        private class Documentation
+        private class Endpoint
+        {
+            public string Url { get; set; }
+            public string Methods { get; set; }
+            public IEnumerable<ParameterInfo> Parameters { get; set; }
+            public MethodDocumentation Documentation { get; set; }
+        }
+
+        #endregion
+
+        #region Nested type: MethodDocumentation
+
+        private class MethodDocumentation
         {
             public string Example { get; set; }
             public string Summary { get; set; }
