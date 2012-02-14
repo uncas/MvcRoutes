@@ -208,6 +208,7 @@ namespace MvcRoutes
             result.Summary = ExtractNodeContent(xmlComments.Summary);
             result.Example = ExtractNodeContent(xmlComments.Example);
             result.Remarks = ExtractNodeContent(xmlComments.Remarks);
+            result.Return = ExtractNodeContent(xmlComments.Return);
 
             return result;
         }
@@ -271,6 +272,7 @@ namespace MvcRoutes
             public string Example { get; set; }
             public string Name { get; set; }
             public string Remarks { get; set; }
+            public string Return { get; set; }
             public string Summary { get; set; }
         }
 
@@ -328,6 +330,9 @@ h4. {0}
                     endpoint.Url.Replace("{", "\\{"),
                     endpoint.Methods,
                     summary);
+
+                if (!string.IsNullOrWhiteSpace(endpoint.Documentation.Return))
+                    Console.WriteLine("| Returns | {0} |", endpoint.Documentation.Return);
 
                 if (!string.IsNullOrWhiteSpace(endpoint.Documentation.Example))
                     Console.WriteLine("| Example | {0} |", endpoint.Documentation.Example);

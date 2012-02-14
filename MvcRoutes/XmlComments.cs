@@ -164,7 +164,7 @@ namespace MvcRoutes
             {
                 // Get single nodes (comments that can appear only once)
                 _summary = _comments.SelectSingleNode("summary");
-                _return = _comments.SelectSingleNode("return");
+                _return = _comments.SelectSingleNode("returns");
                 _remarks = _comments.SelectSingleNode("remarks");
                 _example = _comments.SelectSingleNode("example");
                 _value = _comments.SelectSingleNode("value");
