@@ -338,7 +338,7 @@ h4. {0}
                     Console.WriteLine("| Example | {0} |", endpoint.Documentation.Example);
 
                 if (!string.IsNullOrWhiteSpace(endpoint.Documentation.Remarks))
-                    Console.WriteLine("Remarks: {1}{0}", Environment.NewLine, endpoint.Documentation.Remarks);
+                    Console.WriteLine("{0}Remarks: {1}{0}", Environment.NewLine, endpoint.Documentation.Remarks);
 
                 if (endpoint.Parameters != null && endpoint.Parameters.Any())
                 {
