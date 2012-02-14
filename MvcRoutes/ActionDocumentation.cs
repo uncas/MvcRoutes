@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace MvcRoutes
 {
     public class ActionDocumentation
@@ -8,5 +10,6 @@ namespace MvcRoutes
         public string Remarks { get; set; }
         public string Return { get; set; }
         public string Summary { get; set; }
+        public Dictionary<string, string> Params { get; set; }
     }
 }

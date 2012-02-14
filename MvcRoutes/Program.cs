@@ -53,8 +53,6 @@ namespace MvcRoutes
                 formatter.OutputGroup(groupName.SplitUpperCaseToString());
                 OutputEndpoints(formatter, controller.ToList().OrderBy(e => e.Documentation.Name));
             }
-
-            //OutputEndpoints(formatter, endpoints);
         }
 
         private static void OutputEndpoints(IEndpointFormatter formatter, IEnumerable<Endpoint> endpoints)
@@ -202,10 +200,15 @@ namespace MvcRoutes
             result.Example = ExtractNodeContent(xmlComments.Example);
             result.Remarks = ExtractNodeContent(xmlComments.Remarks);
             result.Return = ExtractNodeContent(xmlComments.Return);
+            result.Params = ExtractNodeContent(xmlComments.Params);
 
             return result;
         }
 
+        private static Dictionary<string, string> ExtractNodeContent(XmlNodeList nodes)
+        {
+            return WikiLongFormatter.GetParameterDocumentations(nodes);
+        }
 
         private static string ExtractNodeContent(XmlNode summaryNode)
         {

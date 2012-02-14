@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Xml;
@@ -42,7 +43,21 @@ h3. {0}
             if (!string.IsNullOrWhiteSpace(endpoint.Documentation.Remarks))
                 Console.WriteLine("{0}Remarks: {1}{0}", Environment.NewLine, endpoint.Documentation.Remarks);
 
-            if (endpoint.Parameters != null && endpoint.Parameters.Any())
+            Dictionary<string, string> parameterDocs = endpoint.Documentation.Params;
+
+            if (parameterDocs.Any())
+            {
+                Console.WriteLine(@"
+|| Parameter || Description ||");
+                foreach (var parameter in parameterDocs)
+                {
+                    Console.WriteLine(
+                        "| {0} | {1} |",
+                        parameter.Key,
+                        parameter.Value);
+                }
+            }
+            else if (endpoint.Parameters != null && endpoint.Parameters.Any())
             {
                 Console.WriteLine(@"
 || Parameter || Description ||");
@@ -75,9 +90,16 @@ h2. {0}
 
         private static string GetActionDocumentation(ParameterInfo parameter)
         {
+            string parameterName = parameter.Name;
             var xmlComments = new XmlComments(parameter.Member);
 
-            XmlNodeList nodes = xmlComments.Params;
+            return GetParameterDocumentation(xmlComments.Params, parameterName);
+        }
+
+        private static string GetParameterDocumentation(
+            XmlNodeList nodes,
+            string parameterName)
+        {
             foreach (XmlNode node in nodes)
             {
                 if (node.Attributes == null)
@@ -85,11 +107,28 @@ h2. {0}
                 XmlAttribute xmlAttribute = node.Attributes["name"];
                 if (xmlAttribute == null)
                     continue;
-                if (xmlAttribute.InnerText == parameter.Name)
+                if (xmlAttribute.InnerText == parameterName)
                     return node.InnerText;
             }
 
             return string.Empty;
+        }
+
+        public static Dictionary<string, string> GetParameterDocumentations(
+            XmlNodeList nodes)
+        {
+            var result = new Dictionary<string, string>();
+            foreach (XmlNode node in nodes)
+            {
+                if (node.Attributes == null)
+                    continue;
+                XmlAttribute xmlAttribute = node.Attributes["name"];
+                if (xmlAttribute == null)
+                    continue;
+                result.Add(xmlAttribute.InnerText, node.InnerText);
+            }
+
+            return result;
         }
     }
 }
