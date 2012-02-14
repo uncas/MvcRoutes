@@ -134,6 +134,16 @@ namespace MvcRoutes
 
         private static string GetParametersString(Route rt)
         {
+            IEnumerable<ParameterInfo> parameters = GetParameters(rt);
+
+            if (parameters == null)
+                return string.Empty;
+
+            return string.Join(", ", parameters.Select(p => p.Name));
+        }
+
+        private static IEnumerable<ParameterInfo> GetParameters(Route rt)
+        {
             MethodInfo actionMethodInfo;
             try
             {
@@ -141,15 +151,13 @@ namespace MvcRoutes
             }
             catch (Exception ex)
             {
-                return ex.Message;
+                return null;
             }
 
             if (actionMethodInfo == null)
-                return string.Empty;
+                return null;
 
-            ParameterInfo[] parameters = actionMethodInfo.GetParameters();
-
-            return string.Join(", ", parameters.Select(p => p.Name));
+            return actionMethodInfo.GetParameters();
         }
 
         private static Documentation GetDocumentation(Route rt)
