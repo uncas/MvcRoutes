@@ -17,6 +17,11 @@ namespace MvcRoutes
 h1. Endpoints");
         }
 
+        private static string WikiEscapeText(string input)
+        {
+            return input.Replace("{", "\\{");
+        }
+
         public void OutputEndpoint(Endpoint endpoint)
         {
             string summary = endpoint.Documentation.Summary;
@@ -30,7 +35,7 @@ h3. {0}
 | HTTP Methods | {2} |
 | Summary | {3} |",
                 FormatName(name),
-                endpoint.Url.Replace("{", "\\{"),
+                WikiEscapeText(endpoint.Url),
                 endpoint.Methods,
                 summary);
 
@@ -41,7 +46,7 @@ h3. {0}
                 Console.WriteLine("| Example | {0} |", endpoint.Documentation.Example);
 
             if (!string.IsNullOrWhiteSpace(endpoint.Documentation.Remarks))
-                Console.WriteLine("{0}Remarks: {1}{0}", Environment.NewLine, endpoint.Documentation.Remarks);
+                Console.WriteLine("{0}Remarks: {1}{0}", Environment.NewLine, WikiEscapeText(endpoint.Documentation.Remarks));
 
             Dictionary<string, string> parameterDocs = endpoint.Documentation.Params;
 
